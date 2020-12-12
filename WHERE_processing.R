@@ -21,18 +21,21 @@ WHERE_data <-
     na.strings = ""
   )
 
+# Create column names that make sense ie no weird characters (these will become rownames)
+colnames(WHERE_data)[1] <- "QID"
+colnames(WHERE_data)[2] <- "Q_text"
+
 ### ------- MANIPULATE DATA -------------------- ###
 
 ## We need to create proper column and row names, and then transpose the data
 
+
+
 #First, remove all of the blank rows & columns.
-WHERE_data <- WHERE_data[ !is.na(WHERE_data$ï..QID), !is.na(WHERE_data[ 18, ])]
+
+WHERE_data <- WHERE_data[ !is.na(WHERE_data$QID), !is.na(WHERE_data[ 18, ])]
+
   # the question is arbitrary, just need a row/question where every value should be filled. 
-
-
-# Now create column names that make sense (these will become rownames)
-colnames(WHERE_data)[1] <- "QID"
-colnames(WHERE_data)[2] <- "Q_text"
 
 # create text to concatinate into a readible paper id
 paper.IDs <- as.character(unlist(WHERE_data[WHERE_data$QID == 7, 3:ncol(WHERE_data)], use.names = F))

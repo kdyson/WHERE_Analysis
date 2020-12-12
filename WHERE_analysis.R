@@ -14,20 +14,24 @@ source("WHERE_processing.R")
 library(dplyr)
 
 # KD: I pull out individual question columns to analyze to avoid accidentally
-# altering the data table.
+# altering the data table. The recoded columns are then put into a new table of
+# cleaned data.
+
+## ------------ CREATE CLEAN TABLE ------------------ ##
+
+WHERE_data_KD_clean <- as_tibble(WHERE_data_KD)
+WHERE_data_KD_clean[ , 8:51] <- ""
 
 ## ------------ PROPERTY ACCESS (Q20-24) ------------ ##
 
 # Goal: This should probably be paragraph form instead of graphs, then we can
 # support with some of the qualitative information (e.g. question 21; discovery
-# of acknowledgements only)
+# of acknowledgments only)
 
 # % that mention property access (question 20) 
-  # there should be essentially 3 answers: Yes, in paper text; Yes, in acknowledgements only; and No
+  # there should be essentially 3 answers: Yes, in paper text; Yes, in Acknowledgments only; and No
 
 Q20 <- WHERE_data_KD$Q20
-
-# unique(Q20)
 
 Q20 <- recode(
   Q20,
@@ -46,21 +50,21 @@ Q20 <- recode(
   "Y; though only obliquely " = "Yes, in paper text",
   "Y; in methods" = "Yes, in paper text",
   
-  "Yes; in Acknowledgements only" = "Yes, in Acknowledgements only",
-  "Yes; in Acknowledgement only" = "Yes, in Acknowledgements only",
-  "Yes; only in Acknowledgements"  = "Yes, in Acknowledgements only",
-  "Yes; in methods and acknowledgement" = "Yes, in Acknowledgements only",
-  "Yes, in Acknowledgment only" = "Yes, in Acknowledgements only",
-  "Yes, in Acknowledgments only" = "Yes, in Acknowledgements only",
-  "Y; only in the acknowledgment" = "Yes, in Acknowledgements only",
-  "Yes; in acknowledgements only" = "Yes, in Acknowledgements only",
-  "Y; in acknowledgements only " = "Yes, in Acknowledgements only",
-  "yes; only in acknowledgment" = "Yes, in Acknowledgements only",
-  "Yes; In acknowledgement only" = "Yes, in Acknowledgements only",
-  "Yes; in acknowledgement only" = "Yes, in Acknowledgements only",
-  "Yes; in acknowledgments only" = "Yes, in Acknowledgements only",
-  "Yes, in acknowledgement only." = "Yes, in Acknowledgements only",
-  "Yes, in acknowledgements only" = "Yes, in Acknowledgements only",
+  "Yes; in Acknowledgements only" = "Yes, in Acknowledgments only",
+  "Yes; in Acknowledgement only" = "Yes, in Acknowledgments only",
+  "Yes; only in Acknowledgements"  = "Yes, in Acknowledgments only",
+  "Yes; in methods and acknowledgement" = "Yes, in Acknowledgments only",
+  "Yes, in Acknowledgment only" = "Yes, in Acknowledgments only",
+  "Yes, in Acknowledgments only" = "Yes, in Acknowledgments only",
+  "Y; only in the acknowledgment" = "Yes, in Acknowledgments only",
+  "Yes; in acknowledgements only" = "Yes, in Acknowledgments only",
+  "Y; in acknowledgements only " = "Yes, in Acknowledgments only",
+  "yes; only in acknowledgment" = "Yes, in Acknowledgments only",
+  "Yes; In acknowledgement only" = "Yes, in Acknowledgments only",
+  "Yes; in acknowledgement only" = "Yes, in Acknowledgments only",
+  "Yes; in acknowledgments only" = "Yes, in Acknowledgments only",
+  "Yes, in acknowledgement only." = "Yes, in Acknowledgments only",
+  "Yes, in acknowledgements only" = "Yes, in Acknowledgments only",
   
   
   "No; Possible access mentioned in acknowledgements but not explicitly" = "No",
@@ -78,12 +82,98 @@ Q20 <- recode(
 Q20_table <- table(Q20)
 Q20_table/sum(Q20_table)
 
-# This can be supported by qualitative information from question 21 (authors
-# discussing avoiding access requests).
+WHERE_data_KD_clean$Q20 <- Q20
 
+# This can be supported by qualitative information from question 21 (Do authors
+# mention using a land use/research design to avoid requesting access?).
 
+Q21 <- WHERE_data_KD$Q21
+
+Q21_Yes <- grep("[Y,y]es;", Q21, value = TRUE)
+
+Q21 <- ifelse(Q21 %in% Q21_Yes, Q21_Yes, "No")
+
+WHERE_data_KD_clean$Q21 <- Q21
+  
+# 9 papers that avoided requesting access.
+# Every other paper is No. (150)
 
 # % where property requires access (most are unknown; question 22)
+
+Q22 <- WHERE_data_KD$Q22
+
+Q22 <- recode(
+  Q22,
+  "Unknown" = "Not reported",
+  "unknown" = "Not reported",
+  "Unknown; though presumably harvest permission was required" = "Not reported",
+  "Unknown; but probably" = "Not reported",
+  
+  "Yes" = "Yes",
+  "Y" = "Yes",
+  "Yes?" = "Yes",
+  "Yes;" = "Yes",
+  "Yes; from one landowner only" = "Yes",
+  "Reported in another paper" = "Yes",
+  
+  "No" = "No",
+  "N" = "No"
+)
+
+Q22_table <- table(Q22)
+WHERE_data_KD_clean$Q22 <- Q22
+  
+
 # % where response rate is reported (mostly no; question 23)
+
+Q23 <- WHERE_data_KD$Q23
+
+Q23 <- recode(
+  Q23,
+  "Unknown" = "Not reported",
+  "unkown" = "Not reported",
+  "unknown" = "Not reported",
+  "Not Reported" = "Not reported",
+  "na" = "Not reported",
+  "Unknown; 100% inferred" = "Not reported",
+  
+  "Reported in another paper" = "Reported in another paper",
+  "Unknown; reported in another paper as 2/206" = "Reported in another paper",
+  
+  "40%" = "Yes",
+  "One landowner acknowledged; 100 inferred" = "Yes"
+  
+)
+
+Q23[which(Q22 == "No" | Q22 == "Not reported")] <- "NA"
+
+Q23_table <- table(Q23)
+WHERE_data_KD_clean$Q23 <- Q23
+
+
 # % where non-responses method is reported (question 24)
 # Note these last two need to be filtered to remove “No” answers to Question 22
+
+Q24 <- WHERE_data_KD$Q24
+
+Q24 <- recode(
+  Q24,
+  "Unknown" = "Not reported",
+  "unkown " = "Not reported",
+  "Not Reported" = "Not reported",
+  "Not reported" = "Not reported",
+  "unknown" = "Not reported",
+  "na" = "Not reported",
+  "Unknown; though some sites did drop out" = "Not reported",
+  "Unknown; inferred 1 landowner accepted" = "Not reported",
+  "Site not chosen?"  = "Not reported",
+  
+  "Unknown; reported in another paper as not sampled" = "Reported in another paper as not sampled"
+)
+
+Q24[which(Q22 == "No" | Q22 == "Not reported")] <- "NA"
+Q24_table <- table(Q24)
+WHERE_data_KD_clean$Q24 <- Q24
+
+
+remove(Q20,Q21,Q22,Q23,Q24)
