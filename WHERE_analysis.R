@@ -48,6 +48,12 @@ table(Q9) ## ONLY 9!!!! with both.
 
 WHERE_data_KD_clean$Q9 <- Q9
 
+
+
+
+
+
+
 # Q10 is the question about having too much justification for working in urban ecosystems...
 
 Q10 <- WHERE_data_KD$Q10
@@ -61,6 +67,9 @@ Q10 <- recode(
   "N; one paragraphâ€¦" = "N",
   "Y?" = "Y"
 )
+
+
+
 
 table(Q10)
 
@@ -89,12 +98,14 @@ WHERE_data_KD_clean$Q11 <- Q11
 
 Q12 <- WHERE_data_KD$Q12
 
-recode(
+Q12 <- recode(
   Q12,
   "N" = "NA",
   "na" = "NA",
-  "uses some data from Buttschardt 2001" = "NA")
+  "uses some data from Buttschardt 2001" = "NA"
+  )
 
+Q12[Q12 == "NA"] <- NA
 WHERE_data_KD_clean$Q12 <- Q12
 
 # Q13 lists cities in analyses. need count/paper and 
@@ -146,13 +157,13 @@ Q15 <- WHERE_data_KD$Q15
 
 Q15 <- recode(
   Q15,
-  "Y; in results only" = "Y",
-  "y" = "Y",
-  "No" = "N",
-  "Yes" = "Y",
-  "Y; note it is missing the 34km2 area boundary" = "Y",
-  "N; might be one in supplement" = "N",
-  "Y; note it is included in a diagram of analysis" = "Y"
+  "Y; in results only" = "Yes",
+  "y" = "Yes",
+  "N" = "No",
+  "Y" = "Yes",
+  "Y; note it is missing the 34km2 area boundary" = "Yes",
+  "N; might be one in supplement" = "No",
+  "Y; note it is included in a diagram of analysis" = "Yes"
 )
 
 table(Q15)
@@ -190,10 +201,10 @@ WHERE_data_KD_clean$Q16 <- Q16
 
 Q15_Q16 <- tibble(
   MapPresent = c("No Area Map", "Yes Area Map"),
-  `No Site Map` = c(sum(WHERE_data_KD_clean$Q15 == "N" & WHERE_data_KD_clean$Q16 == "N" ),
-                    sum(WHERE_data_KD_clean$Q15 == "Y" & WHERE_data_KD_clean$Q16 == "N" )),
-  `Yes Site Map` = c(sum(WHERE_data_KD_clean$Q15 == "N" & WHERE_data_KD_clean$Q16 == "Y" ),
-                     sum(WHERE_data_KD_clean$Q15 == "Y" & WHERE_data_KD_clean$Q16 == "Y" ))
+  `No Site Map` = c(sum(WHERE_data_KD_clean$Q15 == "No" & WHERE_data_KD_clean$Q16 == "No" ),
+                    sum(WHERE_data_KD_clean$Q15 == "Yes" & WHERE_data_KD_clean$Q16 == "No" )),
+  `Yes Site Map` = c(sum(WHERE_data_KD_clean$Q15 == "No" & WHERE_data_KD_clean$Q16 == "Yes" ),
+                     sum(WHERE_data_KD_clean$Q15 == "Yes" & WHERE_data_KD_clean$Q16 == "Yes" ))
 )
 
 # So these have some data issues because I was trying to make sense of them. So
@@ -1181,15 +1192,15 @@ Q43 <- recode(
   "Yes; used same area as previous study" = "Yes, though reported in a separate paper",
   "Yes; described in another paper" = "Yes, though reported in a separate paper",
   
-  "Partly, they used two sites (a paired sample) based on key characterisitscs." = "Partly, but requires clarification",
-  "Mostly; doesn't mention what dataset what used to generate random sampling points" = "Partly, but requires clarification",
-  "Maybe; it is very complex and missing some details e.g. does not mention all details for cluster samples" = "Partly, but requires clarification",
-  "Maybe; uncertainty about how many trees in each treatment in each location " = "Partly, but requires clarification",
-  "P" = "Partly, but requires clarification",
-  "partly" = "Partly, but requires clarification",
-  "Yes?" = "Partly, but requires clarification",
+  "Partly, they used two sites (a paired sample) based on key characterisitscs." = "No",
+  "Mostly; doesn't mention what dataset what used to generate random sampling points" = "No",
+  "Maybe; it is very complex and missing some details e.g. does not mention all details for cluster samples" = "No",
+  "Maybe; uncertainty about how many trees in each treatment in each location " = "No",
+  "P" = "No",
+  "partly" = "No",
+  "Yes?" = "Yes",
   
-  "na; where sampling didn't really happen" = "NA"
+  "na; where sampling didn't really happen" = "No" # these were trees harvested from a specific site
   
 )
 
@@ -1199,6 +1210,9 @@ WHERE_data_KD_clean$Q43 <- Q43
 # Q44 Could study site (WHERE) selection be reproduced or replicated?
 
 Q44 <- WHERE_data_KD$Q44
+Q44[rownames(WHERE_data_KD) == "JOUE-BOU-2017-KD"] <- "N" # This is a typo, checked paper.
+Q44[rownames(WHERE_data_KD) == "JOUE-OW-2017-KD"]	<- "Same location" # ditto
+
 
 Q44 <- recode(
   Q44,
@@ -1218,8 +1232,8 @@ Q44 <- recode(
   "N" = "No",
   "N; largely due to the 'random' selection of schools. Unclear what sampling frame is." = "No",
   "No; particularly with site/tree confusion" = "No",
-  "No " = "No",
   "no" = "No",
+  "No " = "No",
   "N; this is due to opportunistic sampling" = "No",
   "no; this is a particularly bad paper" = "No",
   "No; donâ€™t know if belts are on the same side of the road or different sides or in the center??? Very confusing" = "No",
@@ -1235,7 +1249,6 @@ Q44 <- recode(
   "No; however this is proof of concept" = "No",
   "No; have site limitations but don't know study population or how sites were chosen from the (presumably many) sitest that fit the bill." = "No",
   "No; plot locations iwthin sites not known" = "No",
-  "Partly; only along same gradients." = "No", # gradients aren't well defined
   "Replicated only; though no information about how they collected front yard data." = "No", # Don't mention how data collected so cant be replicated.
   "Possibly; but samples might be taken from different distribution" = "No", 
   "Possibly. " = "No", # Requires additional data
@@ -1253,10 +1266,8 @@ Q44 <- recode(
   "Yes; because all sites over 1 ha used. Main question is classifying mixed hardwood forest." = "Yes",
   "Yes; though sampled settlement types may not be the same in other locationsâ€¦" = "Yes",
   "Yes; census so thus can be reproduced." = "Yes",
-  "Yes; census of same areas could be reproduced" = "Yes",
   "Yes; though only in same areas given industry collaboration" = "Yes",
   "Yes; used same area as previous study" = "Yes",
-  "Yes; methods are very simple so not hard to repro" = "Yes",
   "Yes; with some differences in definition. They are pretty well described though" = "Yes",
   "Yes, however it's reported in a separate paper. This paper does not describe sampling design" = "Yes",
   "Yes; provided description of selection criteria (land use, soil type, across city) thus with that data could do something similar" = "Yes",
@@ -1283,9 +1294,11 @@ Q44 <- recode(
   "Reproduced only" = "Duplicated at same sites only",
   "Replicated only as two sites are explicitly named" = "Duplicated at same sites only",
   "Replicated only because exact location given" = "Duplicated at same sites only",
-  
-    "na; where sampling didn't really happen" = "NA"
-                                                           
+  "Yes; census of same areas could be reproduced" = "Duplicated at same sites only",
+  "Yes; methods are very simple so not hard to repro" = "Duplicated at same sites only",
+  "na; where sampling didn't really happen" = "Duplicated at same sites only", # these were trees harvested from a specific site.
+  "Partly; only along same gradients." = "Duplicated at same sites only", # gradients aren't well defined
+  "Same location" = "Duplicated at same sites only"
 )
 
 Q44_table <- table(Q44)
