@@ -68,6 +68,10 @@ rownames(WHERE_data) <- WHERE_data$QID
 # transpose the data
 WHERE_data <- as.data.frame(t(WHERE_data), stringsAsFactors = F)
 
+### ---------- Check for data error ------------- ###
+
+any(WHERE_data$Q7 == "ECOAPP-HUS-2008")
+# should be False.
 
 
 ### ---------- SUBSET THE DATA ----------- ###
