@@ -44,7 +44,7 @@ Q9 <- recode(
   "P; two sites but v. vague" = "P"
 )
 
-table(Q9) ## ONLY 9!!!! with both.
+Q9_table <- table(Q9) ## ONLY 9!!!! with both.
 
 WHERE_data_KD_clean$Q9 <- Q9
 
@@ -64,7 +64,7 @@ Q10 <- recode(
   "Yes" = "Y",
   "N; but they do talk too much about sprawl in lit review" = "N",
   "N; borderline" = "N",
-  "N; one paragraphâ€¦" = "N",
+  "N; one paragraph…" = "N",
   "Y?" = "Y"
 )
 
@@ -85,7 +85,7 @@ Q11 <- recode(
   "maybe?" = "N",
   "No" = "N",
   "N; though it does compare measurement methods" = "N",
-  "N; though time series with related research published previouslyâ€¦" = "N",
+  "N; though time series with related research published previously…" = "N",
   "Y!" = "Y"
   )
 
@@ -187,7 +187,7 @@ Q16 <- recode(
 
   "Y; not cat areas but the neighborhoods" = "Yes",
   "N; though there is an interor building map" = "No",
-  "Y; however only the park where research was conductedâ€¦" = "Yes",
+  "Y; however only the park where research was conducted…" = "Yes",
   "Y; only one study site" = "Yes",
   "P; sites used for simulated nests not noted" = "No",
   "P; study neighborhoods only" = "No"
@@ -215,9 +215,18 @@ Q15_Q16 <- tibble(
 
 Q17 <- WHERE_data_KD$Q17
 
+Q17 <- recode(
+  
+  "unknown" = "Not reported",
+  "Unknown" = "Not reported",
+  "not reported" = "Not reported"
+)
+
+WHERE_data_KD_clean$Q17 <- Q17
+
 # Q18 
 
-Q18 <- WHERE_data_KD$Q18
+WHERE_data_KD_clean$Q18 <- WHERE_data_KD$Q18
 
 # Also, do a count of where Emad and KD disagree.
 
@@ -229,6 +238,14 @@ remove(Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18)
 # Goal: This should probably be paragraph form instead of graphs, then we can
 # support with some of the qualitative information (e.g. question 21; discovery
 # of acknowledgments only)
+
+# What type of property? Fairly lenient here, if I have a ? then its ignored.
+
+Q19 <- WHERE_data_KD$Q19
+
+Q19 <- if_else(grepl("Unknown|unknown|not|Not", Q19), "Not reported", Q19)
+
+WHERE_data_KD_clean$Q19 <- Q19
 
 # % that mention property access (question 20) 
   # there should be essentially 3 answers: Yes, in paper text; Yes, in Acknowledgments only; and No
@@ -298,7 +315,7 @@ Q21 <- ifelse(Q21 %in% Q21_Yes, Q21_Yes, "No")
 WHERE_data_KD_clean$Q21 <- Q21
   
 # 9 papers that avoided requesting access.
-# Every other paper is No. (150)
+# Every other paper is No. (149)
 
 # % where property requires access (most are unknown; question 22)
 
@@ -457,6 +474,11 @@ remove(Q25)
 
 ## ------------ SAMPLING FRAME vs. POPULATION (Q27-29) ------------ 
 
+## Q26
+
+WHERE_data_KD_clean$Q26 <- WHERE_data_KD$Q26
+
+
 ## Question 27: % where population q includes ‘unknown’ (question 27). This is
 ## probably an underestimate b/c we did make some assumptions although we tried
 ## not to. Can support with qualitative data from the ‘evaluator notes’
@@ -526,7 +548,12 @@ Q27_Q28 <- tibble(
 
 
 ## Q29: % where study site population and sampling frame match (question 29).
-## This will be mostly unknowns.
+## This will be mostly unknowns. Common reason of unknown for 29 is that
+## sampling frame was very subjective. For example sites meeting authors
+## criteria--don’t know how that compares with population because not stated, or
+## criteria not well defined. “Sites with similar vegetation and soils” or
+## “Sites meeting author’s selection criteria” or “plots authors got access to”
+
 
 Q29 <- WHERE_data_KD$Q29
 
@@ -584,6 +611,12 @@ remove(Q27,Q28,Q29)
 
 ## Clean up the number of sampling sites
 
+#	This is an extremely basic question, but even here there are papers that
+#	didn’t report. Other papers were written in a way that the number of sampling
+#	sites wasn’t clear, or reported the number only in the abstract and not in the
+#	methods.
+
+
 Q30 <- WHERE_data_KD$Q30
 
 Q30 <- recode(
@@ -594,18 +627,18 @@ Q30 <- recode(
   "674; 550 + 124 opportunisticly sampled plots" = "674",
   "34;" = "34",
   "17 streets" = "17",
-  "Either 17 or 41 depending on how you count" = "17",
-  "91?" = "91",
-  "9; though 21 sites mentione" = "9",
+  "Either 17 or 41 depending on how you count" = "Unknown",
+  "91?" = "Unknown",
+  "9; though 21 sites mentione" = "Unknown",
   "1 site for each of 5 studies?" = "5",
   "Unknown?" = "Unknown",
   "~4000" = "4000",
   "2;10" = "12",
-  "6? Or 36? Or maybe more?" = "6",
+  "6? Or 36? Or maybe more?" = "Unknown",
   "102 sampling sites" = "102",
-  "1 or 51" = "1",
+  "1 or 51" = "Unknown",
   "296; this isnt mentioned till results" = "296",
-  "Not clear--could be 3 landscapes they focused on, 9 starting landscapes or 140?? for forest patches" = "9"
+  "Not clear--could be 3 landscapes they focused on, 9 starting landscapes or 140?? for forest patches" = "Unknown"
 )
 
 Q30_table <- table(Q30)
@@ -619,11 +652,20 @@ Q31 <-WHERE_data_KD$Q31
 
 Q31 <- recode(
   Q31,
-  "Unknown; likely Non-probability convenience" = "Unknown",
-  "Unknown; non-probability sample likely" = "Unknown",
-  "Unknown; likely what was accessible?" = "Unknown",
+  "Unknown; likely Non-probability convenience" = "Unknown", # Fonaroff has literaly no info but probably just went where they wanted. Same with Ficetola.
+  "Unknown; non-probability sample likely" = "Non-probability", #another 'this was sampled'
+  "Unknown; likely what was accessible?" = "Unknown", # these sampling areas were chosen post-hoc---the polygons are based on waterbodies the turtles visited or something. 
+  "Unknown; likely non-probability conveneince sample" = "Unknown",
+  "unknown " = "Non-probability", # this one they chose a sampling area, then identified forest stands within it. Non probability refers to chosing sampling area
+  "Unknown  " = "Unknown",
+  "unknown; likely non-probability" = "Unknown", #Sturdevant unknown; Quigley also. both take area of sampling as given.
+  "Unknown; likely non-probability" = "Non-probability", #Parris should be Non-probability, they're one of the "samples were collected" papers. So is dos Santos
+  "UNKNOWN; says random in abstract based on diameter; however in methods random not mentioned and diameter was measured not a stratification measure…" = "Unknown",
+  
+  
   "Non-probability; Convenience based on flier response" = "Non-probability",
   "Non-probability; Expert choice" = "Non-probability",
+  
   "Random Systematic sampling" = "Probability",
   "Non-probability; Convenience sampling w/ cluster & strata" = "Non-probability; Clustered; Stratified",
   "Non-probability; Convenience sampling w/cluster design" = "Non-probability; Clustered",
@@ -635,8 +677,6 @@ Q31 <- recode(
   "Non-probability and probability; convenience for site and  " = "Non-probability",
   "Convenience sample; Census" = "Non-probability",
   "Non-proability sampling" = "Non-probability",
-  "Unknown; likely non-probability conveneince sample" = "Unknown",
-  "unknown " = "Unknown",
   "Non-probability; likely conveneince?" = "Non-probability",
   "Transects Non-probability; plots stratified random sample" = "Non-probability",
   "Non-probability sample" = "Non-probability",
@@ -654,9 +694,7 @@ Q31 <- recode(
   "Non-probability; stratified" = "Non-probability; Stratified",
   "Stratified; Census of all parks meeting study criteria" = "Census; Stratified",
   "Non-probability; Stratified" = "Non-probability; Stratified",
-  "Unknown; likely non-probability" = "Unknown",
   "Non-probability stratified" = "Non-probability; Stratified",
-  "Unknown  " = "Unknown",
   "Non-probability; not reported"  = "Non-probability",
   "Non-probability sampling, systematic cluster sampling" = "Non-probability; Clustered",
   "non-probability ; stratified sampling" = "Non-probability; Stratified",
@@ -693,12 +731,10 @@ Q31 <- recode(
   "non-probabilitic; systematic sampling; cluster sampling" = "Non-probability; Clustered",
   "non-probability; stratified; cluster" = "Non-probability; Clustered; Stratified",
   "Non-probability; stratified;cluster" = "Non-probability; Clustered; Stratified",
-  "UNKNOWN; says random in abstract based on diameter; however in methods random not mentioned and diameter was measured not a stratification measureâ€¦" = "Unknown",
   "Non-probabilistic; cluster" = "Non-probability; Clustered",
   "Random stratified sample" = "Probability; Stratified",
   "non-probability; randomized design for tree planting with 2 treatments; cluster " = "Non-probability; Clustered",
   "non-probability cluster" = "Non-probability; Clustered",
-  "unknown; likely non-probability" = "Unknown",
   "Non-probability purposive sample" = "Non-probability",
   "probability; stratified" = "Probability; Stratified",
   "non-probability cluster sampling" = "Non-probability",
@@ -719,6 +755,13 @@ WHERE_data_KD_clean$Q31 <- Q31
 
 ## Of projects that were Non-probability, which ones described their
 ## non-probability sampling and which just said "XXX was sampled"?
+
+#	Non-probability sampling included convenience sampling, such as sites the
+#	authors could easily get access to, or were chosen due to ‘expert’ assessment.
+#	Many papers did not report their method of site selection; in one extreme case
+#	the abstract mentioned random stratified sampling based on tree diameter,
+#	however neither the method for site selection nor even measuring tree diameter
+#	were mentioned in the methods section.
 
 Q32 <-WHERE_data_KD$Q32
 
@@ -749,7 +792,7 @@ Q32 <- recode(
   "Chose 53 sites, got permission from 21; then went door to door to get an additional 5" = "Expert choice",
   "systematic sampling based on distance (3 and 6 km) intervals from city center along cardinal direction transects" = "Systematic sample",
   "chose old green roofs that authors could get access to" = "Convenience sample",
-  "not described, just \"â€¦was sampled at seven different sites\"" = "Not reported",
+  "not described, just \"…was sampled at seven different sites\"" = "Not reported",
   "just says sites were chosen" = "Not reported",
   "just says samples were collected" = "Not reported",
   "just says there are three sites" = "Not reported",
@@ -757,11 +800,11 @@ Q32 <- recode(
   "Authors selected sites fitting certain characteristics, no information on how they were chosen." = "Expert choice",
   "From parks of specific size, income filter was applied to reduce pool. Of that pool all but 4 were sampled; those 4 couldn't be visited for misc. reasons." = "NA",
   "Just \"we sampled\"" = "Not reported",
-  "Says \"we collected digital recordingsâ€¦ at 47 lentic water bodiesâ€¦ with varying exposure to traffic noise\"" = "Expert choice",
-  "\"We identified 58 study sites in narrow strips of roadside vegetationâ€¦ using aerial photos and digital map of roads\"" = "Expert choice",
-  "\"7 sites were surveydâ€¦ the number of sites was limited by availability of suitable areas and logistic constraints\"" = "Not reported",
+  "Says \"we collected digital recordings… at 47 lentic water bodies… with varying exposure to traffic noise\"" = "Expert choice",
+  "\"We identified 58 study sites in narrow strips of roadside vegetation… using aerial photos and digital map of roads\"" = "Expert choice",
+  "\"7 sites were surveyd… the number of sites was limited by availability of suitable areas and logistic constraints\"" = "Not reported",
   "all HOAs within CAP LTER Phoenix sites." = "NA",
-  "\"we selected 8 sitesâ€¦\"" = "Not reported",
+  "\"we selected 8 sites…\"" = "Not reported",
   "Just states that one landfill was sampled" = "Not reported",
   "Used expert knowledge and site visits to find high use sites. Randomly chose stream direction to get paired low site" = "Expert choice",
   "\"sampling design was based on the representativeness of different geological materials and soil orders throughout the bay area\"" = "Expert choice",
@@ -783,15 +826,15 @@ Q32 <- recode(
   "area split into 1km grid cells; each grid cell was searched via google maps for possible grasslands" = "Systematic sample",
   "sites were chosen based on household/ha and built cover variables" = "Expert choice",
   "chose two locations within each grid cell" = "Expert choice",
-  "just says 'we estimatedâ€¦ for lawns of 6 homes'." = "Not reported",
+  "just says 'we estimated… for lawns of 6 homes'." = "Not reported",
   "All residential streets in study area" = "Expert choice",
   "chosen based on characteristics above and to have a high degree of similarity in habitat availablity and composition." = "Expert choice",
   "just sites chosen. No details. " = "Not reported",
-  "just says data concerning 135 sampling sites were collectedâ€¦" = "Not reported",
+  "just says data concerning 135 sampling sites were collected…" = "Not reported",
   "from all pocket parks, used criteria to get to final set" = "Expert choice",
   "just says 36 sites chosen" = "Not reported",
   "selected from known breeding sites matching criteria to maximize variation in wetland type and based on access" = "Expert choice",
-  "used a 'survey gap-analysis' procedureâ€¦ plus added another 40 or so sites by unknown means" = "Expert choice",
+  "used a 'survey gap-analysis' procedure… plus added another 40 or so sites by unknown means" = "Expert choice",
   "just sites selected" = "Not reported",
   "Chose all mixed hardwood stands larger than 1 ha, looks to be census of sampling frame" = "Expert choice",
   "Just says area studied" = "Not reported",
@@ -801,7 +844,7 @@ Q32 <- recode(
   "these two sites were chosen based on ecological conditions present" = "Expert choice",
   "Census of all houses" = "NA",
   "just describes wetland chosen. " = "Not reported",
-  "just says that the plots were established. Donâ€™t know how they located the plots for the balanced experimental design" = "Not reported",
+  "just says that the plots were established. Don’t know how they located the plots for the balanced experimental design" = "Not reported",
   "No description given; just that the 15 nests were found." = "Not reported",
   "just says they placed the nests" = "Not reported",
   "Second phase used advertisements for gardens with skinks" = "Convenience sample",
@@ -814,10 +857,10 @@ Q32 <- recode(
   "selected to represent a range of ages but maintain consistent design specifications" = "Expert choice",
   "Site chosen presumably because researchers could grow & harvest trees present" = "Convenience sample",
   "One is convenience sample of public reported trees, one is trees on main streets" = "Convenience sample",
-  "just says trees were planted atâ€¦" = "Not reported",
-  "Just says that trees were pruned in various ways doesn't discuss the whereâ€¦" = "Not reported",
+  "just says trees were planted at…" = "Not reported",
+  "Just says that trees were pruned in various ways doesn't discuss the where…" = "Not reported",
   "selected a green within golfcourse with history of issues" = "Expert choice",
-  "just says 'the study was located in four large'â€¦" = "Not reported",
+  "just says 'the study was located in four large'…" = "Not reported",
   "just says streets selected; sample plots marked" = "Not reported",
   "just says trees were chosen" = "Not reported",
   "systematic sampling (sampling sites and line transects); strata reported but they are post-hoc as best I can tell" = "Systematic sample",
@@ -839,7 +882,7 @@ Q32 <- recode(
   "garden sites identified with help of Extension service" = "Expert choice",
   "six parks were selected" = "Not reported",
   "based on previous study area selected exactly" = "Expert choice",
-  "sitesâ€¦ were selected'" = "Not reported",
+  "sites… were selected'" = "Not reported",
   "just says study took place at this green roof" = "Not reported",
   "garden owners recruited through various means" = "Convenience sample",
   "just say sites were surveyed; 'representative of different land uses'" = "Not reported",
@@ -855,9 +898,9 @@ Q32 <- recode(
   "just says trees were sampled" = "Not reported",
   "sites were selected based on multiple criteria" = "Expert choice",
   "landscapes chosen; forests surveyed when found on aerial maps but not clear if this is a census" = "Expert choice",
-  "Combination of re-sampling sites examined in the 1990s and selection of new sites. For new sites just says \"we selected a larger arrayâ€¦\"" = "Not reported",
-  "Just says \"I surveyedâ€¦\"" = "Not reported",
-  "Authors chose plots within the sitesâ€¦ which they also chose without anything other than \"we observed birds at\"" = "Not reported",
+  "Combination of re-sampling sites examined in the 1990s and selection of new sites. For new sites just says \"we selected a larger array…\"" = "Not reported",
+  "Just says \"I surveyed…\"" = "Not reported",
+  "Authors chose plots within the sites… which they also chose without anything other than \"we observed birds at\"" = "Not reported",
   "just says 'we selected'" = "Not reported",
   "all sites authors knew of" = "Expert choice",
 )
@@ -973,7 +1016,7 @@ Q38 <- recode(
   "na" = "NA",
   "unknown; total of 139" = "Not reported",
   "not reported" = "Not reported",
-  "unknown; not sure how they got 466 samples from the 130 plotsâ€¦" = "Not reported",
+  "unknown; not sure how they got 466 samples from the 130 plots…" = "Not reported",
   "unknown; total of 210, 140, and 140" = "Not reported",
   "unknown" = "Not reported",
   "not reported; total 646" = "Not reported",
@@ -999,7 +1042,7 @@ Q31 <- ifelse((!is.na(Q36) | !is.na(Q37) | !is.na(Q38)) & !grepl("Clust",Q31,T),
 )
 
 WHERE_data_KD_clean$Q31 <- Q31
-
+Q31_table <- table(Q31)
 
 
 ## Q39 what is the sample unit of ANALYSIS
@@ -1014,7 +1057,7 @@ Q39 <- recode(
 
 Q39 <- ifelse(grepl("\\?",Q39,T),
               "Unsure",
-              "Q39")
+              Q39)
 
 WHERE_data_KD_clean$Q39 <- Q39
 
@@ -1028,14 +1071,11 @@ Q40 <- recode(
   "no" = "No",
   "No; they are the same" = "No",
   "N" = "No",
-  "no; though spatial reach of the bat detector isn't knownâ€¦" = "No",
+  "no; though spatial reach of the bat detector isn't known…" = "No",
   "no; large area where nests were searched" = "No",
   "No; they do a good job of establishing plots and then using those as analysis units" = "No",
-  
-  "No; though they do aggregate unit of observation for some analyses." = "No, with qualifications",
-  "No; but note fourth neighborhood for birds (bush) not evaluated." = "No, with qualifications",
-  "no?" = "No, with qualifications",
-  "no? but also discusses cost" = "No, with qualifications",
+  "no?" = "No",
+  "no? but also discusses cost" = "No",
   
   ## For the yes', one common reason was because a sample point was used to
   ## represent the whole plot in analysis. Others use post hoc stratification
@@ -1071,15 +1111,17 @@ Q40 <- recode(
   "yes; created clusters from sampling units using heirarchical clustering" = "Yes, due to aggregation",
   "Yes, trees aggregated to tree species" = "Yes, due to aggregation",
   "yes tree aggregated to tree species" = "Yes, due to aggregation",
+  "No; though they do aggregate unit of observation for some analyses." = "Yes, due to aggregation",
   
   "Partly; depends on analysis" = "Partly, depends on analysis",
   "partly; summed results for the three suburban habitats and treated them as one" = "Partly, depends on analysis",
   "Partly." = "Partly, depends on analysis",
   "Partly; transect for plot for veg?" = "Partly, depends on analysis",
   "Partly; seem to aggreagate forest to cell level." = "Partly, depends on analysis",
+  "No; but note fourth neighborhood for birds (bush) not evaluated." = "Partly, depends on analysis",
   
   "maybe" = "Uncertain",
-  "Maybe; different measurements taken at sampling site and at different scalesâ€¦" = "Uncertain",
+  "Maybe; different measurements taken at sampling site and at different scales…" = "Uncertain",
   "confusing, think this is different and it has been aggregated to site type" = "Uncertain",
   "Maybe?" = "Uncertain",
   "Yes?" = "Uncertain",
@@ -1100,7 +1142,7 @@ Q41 <- recode(
   "trapping; " = "trapping",
   "branch harvest, " = "branch harvest",
   "Mist netting" = "mist netting",
-  "??? Doesnâ€™t say how they got the data!!" = "Not reported",
+  "??? Doesn’t say how they got the data!!" = "Not reported",
   "Nest survey; gis analysis" = "nest survey; GIS analysis",
   "Tree measurements" = "tree measurements",
   "Vegetation surveys; bird point count" = "vegetationsurveys; bird point count",
@@ -1236,13 +1278,13 @@ Q44 <- recode(
   "No " = "No",
   "N; this is due to opportunistic sampling" = "No",
   "no; this is a particularly bad paper" = "No",
-  "No; donâ€™t know if belts are on the same side of the road or different sides or in the center??? Very confusing" = "No",
-  "Probably not; but maybe if locations knownâ€¦" = "No",
+  "No; don’t know if belts are on the same side of the road or different sides or in the center??? Very confusing" = "No",
+  "Probably not; but maybe if locations known…" = "No",
   "No; I have no idea what the study design is." = "No", # hahaha
   "No; contradicting information given" = "No",
   "No; no information on the relationship between sampling sites and parks" = "No",
   "Would be yes--but they don't describe what is considered urban or intermediate" = "No",
-  "No; doesnâ€™t give enough detail about why sites were chosen" = "No",
+  "No; doesn’t give enough detail about why sites were chosen" = "No",
   "No; possibly reproduced if transect sites are documented somewhere." = "No", # this means duplicated
   "No; the choice of sites is still the problem, and unknown sample frame" = "No",
   "No; sample population information missing" = "No",
@@ -1255,7 +1297,7 @@ Q44 <- recode(
   "Maybe; the key issue is not knowing how sites were selected. " = "No",
   "Mostly; doesn't mention what dataset what used to generate random sampling points" = "No",
   "Maybe; uncertainty about how many trees in each treatment in each location " = "No",
-  "Partly; donâ€™t describe how sites were chosen within neighborhoodsâ€¦" = "No",
+  "Partly; don’t describe how sites were chosen within neighborhoods…" = "No",
   "Replication only, though transect location isn't known" = "No", #IDK why i put replication, this is not clear
   "partly; choice of sites is opaque but good information on difference in housing etc." = "No",
   "Possibly; depends on sampling methods reported in other papers" = "No", #only what sampling in other pap
@@ -1264,7 +1306,7 @@ Q44 <- recode(
   "Yes; described in another paper" = "Yes",
   "Y" = "Yes",
   "Yes; because all sites over 1 ha used. Main question is classifying mixed hardwood forest." = "Yes",
-  "Yes; though sampled settlement types may not be the same in other locationsâ€¦" = "Yes",
+  "Yes; though sampled settlement types may not be the same in other locations…" = "Yes",
   "Yes; census so thus can be reproduced." = "Yes",
   "Yes; though only in same areas given industry collaboration" = "Yes",
   "Yes; used same area as previous study" = "Yes",
@@ -1273,7 +1315,7 @@ Q44 <- recode(
   "Yes; provided description of selection criteria (land use, soil type, across city) thus with that data could do something similar" = "Yes",
   "Yes; though only in same areas given industry collaboration" = "Yes", # area means cities here. convenience sample reliant on industry collab.
   "Replicated; only concern is making sure definition of riparian patch is consistent" = "Yes", ## probability
-  "Maybe; just pick a park and can recreate analysisâ€¦" = "Yes", # park not chosen for a reason, so could be replicated at another park... might not replicate results though haha
+  "Maybe; just pick a park and can recreate analysis…" = "Yes", # park not chosen for a reason, so could be replicated at another park... might not replicate results though haha
   "Y; unsure of how to determine plot number per site" = "Yes",
   
   ## I confused myself using different terms for study replication. Basically, I
@@ -1303,6 +1345,9 @@ Q44 <- recode(
 
 Q44_table <- table(Q44)
 WHERE_data_KD_clean$Q44 <- Q44
+
+plot(WHERE_data_KD_clean$Q4, as.factor(WHERE_data_KD_clean$Q44))
+
 
 
 # Q45 Are limitations of WHERE sampling design addressed?
@@ -1348,7 +1393,7 @@ Q45 <- recode(
   "Yes; mention lack of control treatment" = "Yes",
   "Yes, mention psuedo replication limits scale of inference citing Hurlbert 1984" = "Yes",
   "Yes; in discussion 'research limitations' section" = "Yes",
-  "Yes; no trees in city center so couldnâ€™t sample lichen there" = "Yes",
+  "Yes; no trees in city center so couldn’t sample lichen there" = "Yes",
   
   # Partly papers address some but not all limitations (e.g. spatial but not temporal)
   "Partly; briefly mention 6km sites added to densify sampling network and capture spatial heterogeneity" = "Some, but not all",
@@ -1384,6 +1429,7 @@ Q46 <- recode(
   "qualitatively" = "Yes", # though note that this is based on author's reporting.
   "Maybe" = "Yes", #Aerial detected forests which is pretty close samppling frame to popn
   "Partly" = "Yes", # this one uses a grid with random samples, so its potentially a bit more even than landscape but fits for population of grids
+  "na; single site is populatin" = "Yes",
   
   "No; university ownership of many plots means they're likely not representative." = "No",
   "No; sites are more homogenous in their neighborhood but this is in service of the research" = "No",
@@ -1412,17 +1458,15 @@ Q46 <- recode(
   "Unknown; population isnt well defined" = "Unknown",
   "Unknown; population not well defined" = "Unknown",
   "Unknown; population not defined" = "Unknown",
-  "Unknown; donâ€™t really know what population is" = "Unknown",
-  "Unknown; however likely not. Looks like most of the transplantation sites were on the university campus which may vary in important ways from other urban areasâ€¦" = "Unknown",
+  "Unknown; don’t really know what population is" = "Unknown",
+  "Unknown; however likely not. Looks like most of the transplantation sites were on the university campus which may vary in important ways from other urban areas…" = "Unknown",
   "Unknown; site diversity is built in but population not discussed and sampling frame only obliquely" = "Unknown",
   "unknown?" = "Unknown",
   "Not the popultion of urban wetlands, this seems unique. However they seem only to consider this one so what the population is is uncertain" = "Unknown",
   "Unknown but probably" = "Unknown",
   "Unknown; but probably" = "Unknown", # Not sure why i wrote but probably, neither popn or sample frame are well defined.
   "Unknown; though likely yes" = "Unknown",
-  
-  "na; where sampling didn't really happen" = "NA",
-  "na; single site is populatin" = "NA"
+  "na; where sampling didn't really happen" = "Unknown" # trees harvested from a site, but popn unknown
   
 )
 
@@ -1436,7 +1480,7 @@ Q47 <- WHERE_data_KD$Q47
 Q47 <- recode(
   Q47,
   "Partial; vaccine vs not vaccine discussed" = "Partial",
-  "Partial; low sample size but doesnâ€™t discuss non-random sampling bias" = "Partial",
+  "Partial; low sample size but doesn’t discuss non-random sampling bias" = "Partial",
   "Partly; discuss elimintating confounding factors by choosing very similar sites." = "Partial",
   "Partly; discussed spatial correlation" = "Partial",
   "Partly; they discuss differences in how urban gradients are quantified, however not how they chose study sites" = "Partial",
@@ -1456,7 +1500,7 @@ Q47 <- recode(
   "Yes; discuss space for time substitution" = "Yes",
   "Discuss small sample sizes" = "Yes",
   
-  "No; though they seem to think itâ€™s a near census." = "No",
+  "No; though they seem to think it’s a near census." = "No",
   "no" = "No",
   "Not really, though " = "No",
   "N" = "No",
@@ -1496,8 +1540,8 @@ Q48 <- recode(
   "unknown" = "Not reported",
   "Probably not; though no comparison of yes vs no" = "Not reported",
   "Probably not; but not reported" = "Not reported",
-  "Maybe? Donâ€™t know who didnâ€™t respond to the advertisements" = "Not reported",
-  "Unknown; they purposefully used public areas which may differ in some way from private areasâ€¦" = "Not reported",
+  "Maybe? Don’t know who didn’t respond to the advertisements" = "Not reported",
+  "Unknown; they purposefully used public areas which may differ in some way from private areas…" = "Not reported",
   
   "Yes; Residential areas are sampled differently than publically accessible areas!" = "Yes",
   "Yes; only streetsides sampled so results may not be generalizable to residential etc land use." = "Yes",
@@ -1555,7 +1599,7 @@ Q49 <- recode(
   "Mention spatial limits, specifically comparing method development locations (North USA) and CA climates" = "Yes, generalizes and mentions limits",
   "Generalize from space-for-time substitution to likely time trends; explicitly mention spatial limits" = "Yes, generalizes and mentions limits",
   "Yes; mention geographic and measurement limitations" = "Yes, generalizes and mentions limits",
-  "Donâ€™t generalize except for golf course recommendations, which they do qualify" = "Yes, generalizes and mentions limits",
+  "Don’t generalize except for golf course recommendations, which they do qualify" = "Yes, generalizes and mentions limits",
   "Generally limit to southwestern deserts, which is appropriate" = "Yes, generalizes and mentions limits",
   "Generalize and mention that study is based on one city (spatial limitation)" = "Yes, generalizes and mentions limits",
   
@@ -1567,9 +1611,9 @@ Q49 <- recode(
   "Does not generalize" = "Study doesn't generalize",
   "don't generalize" = "Study doesn't generalize",
   "don't really generalize; mention temporal differences between years re: weather" = "Study doesn't generalize",
-  "Donâ€™t really generalize; mention limits for what but not where" = "Study doesn't generalize",
+  "Don’t really generalize; mention limits for what but not where" = "Study doesn't generalize",
   "don't really generalize, but do mention differences between this study and the one it replicates" = "Study doesn't generalize",
-  "Donâ€™t really generalize results" = "Study doesn't generalize",
+  "Don’t really generalize results" = "Study doesn't generalize",
   "Don't really generalize, but when they do it is to western us; but their scale is huge so I think this is ok" = "Study doesn't generalize",
   "Don't generalize much; do mention temporal limits" = "Study doesn't generalize",
   "Don't really generalize, more compare/contrast with other research" = "Study doesn't generalize",
@@ -1577,19 +1621,19 @@ Q49 <- recode(
   "Don't generalize really" = "Study doesn't generalize",
   "Don't generalize really; make statements about urbanizing landscape but using numbers from the study" = "Study doesn't generalize",
   "No limits mentioned, but don't really generalize" = "Study doesn't generalize",
-  "no limits mentioned, but donâ€™t really generalize beyond bangkok" = "Study doesn't generalize",
+  "no limits mentioned, but don’t really generalize beyond bangkok" = "Study doesn't generalize",
   "Don't really generalize. Comparisons between papers do mention climactic (spatial) differences." = "Study doesn't generalize",
   "Do not generalize, situate in Moscow green studied" = "Study doesn't generalize",
   "No limits mentioned; doesn't generalize really" = "Study doesn't generalize",
   "Doesn't generalize really" = "Study doesn't generalize",
   "Don't really generalize beyond Edgewater" = "Study doesn't generalize",
-  "Doesnâ€™'t really generalize" = "Study doesn't generalize",
+  "Doesn’'t really generalize" = "Study doesn't generalize",
   "Don't relly generalize except for recommendations." = "Study doesn't generalize",
   "don't generalize beyond study area really" = "Study doesn't generalize",
   "Don't really generalize, discussion is focused on the 65 species seen and how they interacted with habitat." = "Study doesn't generalize",
   "No generalizations made?" = "Study doesn't generalize",
-  "Donâ€™t really generalize beyond MA, though they use vague language." = "Study doesn't generalize",
-  "Donâ€™t generalize beoyond study area" = "Study doesn't generalize",
+  "Don’t really generalize beyond MA, though they use vague language." = "Study doesn't generalize",
+  "Don’t generalize beoyond study area" = "Study doesn't generalize",
   "No generalizations made, however authors compare with other techniques e.g. LiDAR " = "Study doesn't generalize",
   "Don't really generalize; few statements are backed up by addt'l studies" = "Study doesn't generalize",
   "Don't really generlize." = "Study doesn't generalize",
@@ -1604,25 +1648,25 @@ Q49 <- recode(
   "generalize but don't discuss" = "No, generalizes but does not mention limits",
   " generalize but don't discuss" = "No, generalizes but does not mention limits",
   "No, generalize and don't mention" = "No, generalizes but does not mention limits",
-  "Generalize but donâ€™t discuss" = "No, generalizes but does not mention limits",
+  "Generalize but don’t discuss" = "No, generalizes but does not mention limits",
   "no" = "No, generalizes but does not mention limits",
   "N" = "No, generalizes but does not mention limits",
   "no; Generalize and don't discuss" = "No, generalizes but does not mention limits",
   "generalize homes to city. " = "No, generalizes but does not mention limits",
   "No, generalize but don't discuss" = "No, generalizes but does not mention limits",
-  "Explicitly say in methods that their choice of neighborhood to study means it can be generalized to other urban ecosystems in eastern North Americaâ€¦ this is a stretch." = "No, generalizes but does not mention limits",
-  "They make some temporal generalization (speaking of possible future events) and then in the last sentences hugely generalize to other animals in urban areas globallyâ€¦" = "No, generalizes but does not mention limits",
+  "Explicitly say in methods that their choice of neighborhood to study means it can be generalized to other urban ecosystems in eastern North America… this is a stretch." = "No, generalizes but does not mention limits",
+  "They make some temporal generalization (speaking of possible future events) and then in the last sentences hugely generalize to other animals in urban areas globally…" = "No, generalizes but does not mention limits",
   "Generalize frequently; no limitations made" = "No, generalizes but does not mention limits",
   "no mention of limits" = "No, generalizes but does not mention limits",
   "generalize to the future and to a broader area; but do not discuss limitations" = "No, generalizes but does not mention limits",
   "No; and generalize the patterns they found in categorical vs continuous variables broadly" = "No, generalizes but does not mention limits",
-  "generalize but donâ€™t discuss" = "No, generalizes but does not mention limits",
+  "generalize but don’t discuss" = "No, generalizes but does not mention limits",
   "they generalize quite a lot; no limits given." = "No, generalizes but does not mention limits",
-  "No limits mentioned; however donâ€™t generalize beyond study site until planning implication section" = "No, generalizes but does not mention limits",
+  "No limits mentioned; however don’t generalize beyond study site until planning implication section" = "No, generalizes but does not mention limits",
   "Generalize to urban areas in Aus" = "No, generalizes but does not mention limits",
-  "Mention some unique watershed characteristics; but donâ€™t discuss implications for generalizability" = "No, generalizes but does not mention limits",
+  "Mention some unique watershed characteristics; but don’t discuss implications for generalizability" = "No, generalizes but does not mention limits",
   "Seem to generalize to other cities about park size; but do mention the study limits" = "No, generalizes but does not mention limits",
-  "Authors generalize only in conclusion; donâ€™t limit" = "No, generalizes but does not mention limits",
+  "Authors generalize only in conclusion; don’t limit" = "No, generalizes but does not mention limits",
   "Generalize without mentioning limits; however temporal projection specific to Baltimore" = "No, generalizes but does not mention limits",
   "Generalize but do not mention any limits" = "No, generalizes but does not mention limits",
   "Generalization mostly limited to 'The West'" = "No, generalizes but does not mention limits",
@@ -1632,7 +1676,7 @@ Q49 <- recode(
   "no limits to generalization given" = "No, generalizes but does not mention limits",
   "Generalize, but don't discuss limits" = "No, generalizes but does not mention limits",
   "no limits mentioned" = "No, generalizes but does not mention limits",
-  "Donâ€™t mention limits. Some generalization, though they do specifically mention that models from other areas are not generalizable for allometric equations" = "No, generalizes but does not mention limits",
+  "Don’t mention limits. Some generalization, though they do specifically mention that models from other areas are not generalizable for allometric equations" = "No, generalizes but does not mention limits",
   "generalize to england, which seems reasonable if somewhat unsupported" = "No, generalizes but does not mention limits",
   "No; and generalize to sedum + bees generally..." = "No, generalizes but does not mention limits",
   "last paragraph generalizes without limits" = "No, generalizes but does not mention limits",
@@ -1676,7 +1720,7 @@ Q50 <- recode(
   "No policy recommendations made" = "No policy recommendations made",
   "No specific policy recommendations made; only that we should manage urban landscape at a wider scale" = "No policy recommendations made",
   "No specific policy recommendations made; only that increased connectivity might enhance natural biological pest control" = "No policy recommendations made",
-  "No policy suggestions made; just mention that emissions inventories might underestimate leaf massâ€¦" = "No policy recommendations made",
+  "No policy suggestions made; just mention that emissions inventories might underestimate leaf mass…" = "No policy recommendations made",
   "No recommendations made" = "No policy recommendations made",
   "No policy suggestions made; recommendation is for more study" = "No policy recommendations made",
   "no policy recommendations made" = "No policy recommendations made",
@@ -1716,9 +1760,9 @@ Q50 <- recode(
   "Yes, recommendations beyond geographic scope" = "Yes, make policy recommendations beyond scope",
   "yes; policy recs are for entire UK" = "Yes, make policy recommendations beyond scope",
   "recommendations focus on matrix quality and mostly cite other research. One does not; it generalizes outside of the area" = "Yes, make policy recommendations beyond scope",
-  "Yes; recommendations donâ€™t have any limit on scope." = "Yes, make policy recommendations beyond scope",
+  "Yes; recommendations don’t have any limit on scope." = "Yes, make policy recommendations beyond scope",
   "Policy recommendations made are outside of scope of generalization, but are straightforward." = "Yes, make policy recommendations beyond scope",
-  "Make recommendations that are very general, including some about vegetation when that wasnâ€™t the main study focus" = "Yes, make policy recommendations beyond scope",
+  "Make recommendations that are very general, including some about vegetation when that wasn’t the main study focus" = "Yes, make policy recommendations beyond scope",
   "recommend trimming/pruning for greater density; however don't place any limits on this." = "Yes, make policy recommendations beyond scope",
   "Only made about Addis Ababa and they're not very specific." = "Yes, make policy recommendations beyond scope",
   "The recommendations are made in line with findings; however they generalize without any limits" = "Yes, make policy recommendations beyond scope",
@@ -1739,7 +1783,7 @@ Q50 <- recode(
   "No; recommendations seem appropriate" = "No, policy recommendation are within scope",
   "No, policy recommendations are appropriate" = "No, policy recommendation are within scope",
   " No, policy recommendations are appropriate; recommend scientists use explicit definitions." = "No, policy recommendation are within scope",
-  " No, policy recommendations are appropriate; they mostly discuss CH4 management in Wisconsinâ€¦" = "No, policy recommendation are within scope",
+  " No, policy recommendations are appropriate; they mostly discuss CH4 management in Wisconsin…" = "No, policy recommendation are within scope",
   "No, policy recommendations are appropriate; made for city where study was completed" = "No, policy recommendation are within scope",
   "No, policy recommendations are appropriate; extensive policy recommendations are good" = "No, policy recommendation are within scope",
   "No, policy recommendations are appropriate; recommendations are fairly basic." = "No, policy recommendation are within scope",
@@ -1792,3 +1836,154 @@ WHERE_data_KD_clean$Q50 <- Q50
 
 
 remove(Q43,Q44,Q45,Q46,Q47,Q48,Q49,Q50)
+
+#------------- INDEX Calculation ---------------------------------
+
+# Calculate the reporting quality index
+
+reporting_quality <- tibble(
+
+  WHERE_data_KD_clean[ , c(
+    "Q1", # title
+    "Q2", # journal
+    "Q4", # year
+    "Q7", # id
+    
+    "Q9", "Q15", "Q16", "Q17",
+    "Q19", "Q20", "Q21", "Q22",
+    "Q23", "Q24",
+    
+    "Q25", "Q26", "Q27", "Q28",
+    "Q30", "Q31", "Q32", "Q33",
+    "Q34", "Q35", "Q36", "Q37",
+    "Q38", "Q39", "Q43", "Q44",
+    "Q45", "Q47", "Q49"
+    )]
+    
+)
+
+
+reporting_quality$RQ_index <-   
+  
+  if_else(reporting_quality$Q9 == "Y", 2, 
+          if_else(reporting_quality$Q9 == "P", 1, 0)) +
+
+  if_else(reporting_quality$Q15 == "Yes", 1, 0) +
+  
+  if_else(reporting_quality$Q16 == "Yes", 1, 0) +
+  
+  if_else(reporting_quality$Q17 == "Not reported", 0 ,1) +
+  
+  if_else(reporting_quality$Q19 == "Not reported", 0, 1) + 
+  
+  if_else(reporting_quality$Q20 == "Yes, in paper text", 2, 
+          if_else(reporting_quality$Q20 == "Yes, in Acknowledgments only", 1, 0)) +
+  
+  if_else(reporting_quality$Q21 == "Yes", 1, 0) +
+  
+  if_else(reporting_quality$Q22 == "Not reported", 0, 1) +
+  
+  if_else(reporting_quality$Q23 == "Not reported", 0, 1) + 
+  
+  if_else(reporting_quality$Q24 == "Not reported", 0, 1) +
+  
+  if_else(reporting_quality$Q25 == "Not reported", 0, 1) +
+  
+  if_else(reporting_quality$Q26 == "Unknown", 0, 1) +
+  
+  if_else(reporting_quality$Q27 == "Unknown", 0, 2) +
+  
+  if_else(reporting_quality$Q28 == "Unknown", 0, 2) +
+
+  if_else(reporting_quality$Q30 == "Unknown", 0, 1) +
+  
+  if_else(grepl(pattern = "Non-prob", reporting_quality$Q31), 3,
+          if_else(grepl("Probability", reporting_quality$Q31), 4, 0)) +
+  
+  if_else(is.na(reporting_quality$Q32), 0,
+          if_else(reporting_quality$Q32 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q33), 0,
+          if_else(reporting_quality$Q33 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q34), 0,
+          if_else(reporting_quality$Q34 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q35), 0,
+          if_else(reporting_quality$Q35 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q36), 0,
+          if_else(reporting_quality$Q36 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q37), 0,
+          if_else(reporting_quality$Q37 == "Not reported", -1, 0)) +
+  if_else(is.na(reporting_quality$Q38), 0,
+          if_else(reporting_quality$Q38 == "Not reported" | reporting_quality$Q38 == "Unclear", -1, 0)) +
+  
+  if_else(reporting_quality$Q39 == "Unsure", 0, 1) +
+  
+  if_else(reporting_quality$Q43 == "No", 0, 4) +
+  
+  if_else(reporting_quality$Q44 == "No", 0,
+          if_else(reporting_quality$Q44 == "Duplicated at same sites only", 2, 4)) +
+  
+  if_else(is.na(reporting_quality$Q45), 0,
+    if_else(reporting_quality$Q45 == "No", 0,
+          if_else(reporting_quality$Q45 == "Some, but not all", 1, 2))) +  
+  
+  if_else(is.na(reporting_quality$Q47), 0,
+          if_else(reporting_quality$Q47 == "No", 0,
+          if_else(reporting_quality$Q47 == "Partial", 1, 2))) +  
+
+  if_else(reporting_quality$Q49 == "No, generalizes but does not mention limits", 0,
+          if_else(reporting_quality$Q49 == "Study doesn't generalize", 1,
+                  if_else(reporting_quality$Q49 == "Partly, generalizes and mentions some limits", 2,
+                          4)))  
+  
+
+
+
+library(ggplot2)
+ggplot(reporting_quality, aes(Q2, RQ_index)) + geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+ggplot(reporting_quality, aes(Q4, RQ_index)) + geom_jitter() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+
+# Calculate the sampling quality index
+
+sampling_quality <- tibble(
+  
+  Q1 = WHERE_data_KD_clean$Q1,
+  Q2 = WHERE_data_KD_clean$Q2,
+  Q4 = WHERE_data_KD_clean$Q4,
+  
+  Q29 = WHERE_data_KD_clean$Q29,
+  Q31 = WHERE_data_KD_clean$Q31,
+  Q40 = WHERE_data_KD_clean$Q40,
+  Q46 = WHERE_data_KD_clean$Q46,
+  Q48 = WHERE_data_KD_clean$Q48
+  
+)
+
+sampling_quality$SQ_index <- 
+  
+  if_else(sampling_quality$Q29 == "Yes", 2, 
+          if_else(sampling_quality$Q29 == "No", 1, 0)) +
+  if_else(grepl(pattern = "Probability",x = sampling_quality$Q31) == TRUE, 2, 0) +
+  if_else(sampling_quality$Q40 == "No", 2,
+          if_else(grepl(pattern = "Yes|Partly", x = sampling_quality$Q40), 1, 0)) +
+  if_else(sampling_quality$Q46 == "Yes", 2, 
+          if_else(sampling_quality$Q46 == "No", 1, 0)) +
+  if_else(sampling_quality$Q48 == "No", 2, 
+          if_else(sampling_quality$Q48 == "Yes", 1, 0)) 
+
+library(ggplot2)
+ggplot(sampling_quality, aes(Q2, SQ_index)) + geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+ggplot(sampling_quality, aes(Q4, SQ_index)) + geom_jitter() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+
+
+
+ggplot() + geom_point(aes(reporting_quality$RQ_index, sampling_quality$SQ_index)) +
+  theme(axis.text.x = element_text(vjust = 1, hjust = 1))
+cor(reporting_quality$RQ_index, sampling_quality$SQ_index)
