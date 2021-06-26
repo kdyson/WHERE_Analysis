@@ -11,6 +11,7 @@
 ## (this file, WHERE_analysis.R)
 
 source("WHERE_processing.R")
+library(ggplot2)
 library(dplyr)
 
 # KD: I pull out individual question columns to analyze to avoid accidentally
@@ -23,8 +24,6 @@ WHERE_data_KD_clean <- as_tibble(WHERE_data_KD)
 WHERE_data_KD_clean[ , 8:51] <- ""
 
 ## ------------ SUMMARY STATS (Q9-12) ------------
-
-hist(as.numeric(WHERE_data_KD_clean$Q4), 45, xlim = c(1970,2020), ylim = c(0,25), xlab = "Publication Year", main = "Histogram of Publication Year") 
 
 # Q9: were both N and sampling design included in the abstract? Usually only N for P category.
 
@@ -108,7 +107,7 @@ Q12 <- recode(
 Q12[Q12 == "NA"] <- NA
 WHERE_data_KD_clean$Q12 <- Q12
 
-# Q13 lists cities in analyses. need count/paper and 
+# Q13 lists cities in analyses. 
 
 Q13 <- WHERE_data_KD$Q13
 
@@ -166,9 +165,10 @@ Q15 <- recode(
   "Y; note it is included in a diagram of analysis" = "Yes"
 )
 
-table(Q15)
 
 WHERE_data_KD_clean$Q15 <- Q15
+table(WHERE_data_KD_clean$Q15)
+
 
 # Q16 map of study sites 
 
@@ -215,7 +215,7 @@ Q15_Q16 <- tibble(
 
 Q17 <- WHERE_data_KD$Q17
 
-Q17 <- recode(
+Q17 <- recode(Q17,
   
   "unknown" = "Not reported",
   "Unknown" = "Not reported",
@@ -497,7 +497,7 @@ Q27[Q27 %in% grep("\\?", Q27, value = TRUE)] <- "Uncertain"
 Q27_table <- table(Q27)
 WHERE_data_KD_clean$Q27 <- Q27
 
-# 56 Unknown and 26 Uncertain. So about one third I couldn't understand. Others are
+# 56 Unknown and 25 Uncertain. So about one third I couldn't understand. Others are
 # generally reasoned out based on the text. not many explicitly said 'study
 # population' or whatever.
 
@@ -652,15 +652,15 @@ Q31 <-WHERE_data_KD$Q31
 
 Q31 <- recode(
   Q31,
-  "Unknown; likely Non-probability convenience" = "Unknown", # Fonaroff has literaly no info but probably just went where they wanted. Same with Ficetola.
+  "Unknown; likely Non-probability convenience" = "Non-probability; Stratified", # Fonaroff has little info but probably just went where they wanted in strata. Same with Ficetola. Ficetola not stratified.
   "Unknown; non-probability sample likely" = "Non-probability", #another 'this was sampled'
-  "Unknown; likely what was accessible?" = "Unknown", # these sampling areas were chosen post-hoc---the polygons are based on waterbodies the turtles visited or something. 
+  "Unknown; likely what was accessible?" = "Unknown; Clustered", # these sampling areas were chosen post-hoc---the polygons are based on waterbodies the turtles visited or something. 
   "Unknown; likely non-probability conveneince sample" = "Unknown",
   "unknown " = "Non-probability", # this one they chose a sampling area, then identified forest stands within it. Non probability refers to chosing sampling area
   "Unknown  " = "Unknown",
-  "unknown; likely non-probability" = "Unknown", #Sturdevant unknown; Quigley also. both take area of sampling as given.
+  "unknown; likely non-probability" = "Unknown", #Sturdevant unknown; Quigley also. both take area of sampling as given. Sturdevant has clustering.
   "Unknown; likely non-probability" = "Non-probability", #Parris should be Non-probability, they're one of the "samples were collected" papers. So is dos Santos
-  "UNKNOWN; says random in abstract based on diameter; however in methods random not mentioned and diameter was measured not a stratification measure…" = "Unknown",
+  "UNKNOWN; says random in abstract based on diameter; however in methods random not mentioned and diameter was measured not a stratification measure…" = "Unknown; Stratified",
   
   
   "Non-probability; Convenience based on flier response" = "Non-probability",
@@ -683,9 +683,9 @@ Q31 <- recode(
   "Probability; Random stratified sample" = "Probability; Stratified",
   "Probability; random dual-density tessellation stratified design" = "Probability; Stratified",
   "Probability; stratified random sample; modified to make it more evenly distributed spatially" = "Probability; Stratified",
-  "non-probability; cluster" = "Non-probability; Clustered",
+  "non-probability; cluster" = "Probability; Clustered", #"Non-probability; Clustered", 
   "stratified random; with access constraints" = "Probability; Stratified",
-  "non-probability cluster sampling; some stratification" = "Non-probability; Clustered",
+  "non-probability cluster sampling; some stratification" = "Non-probability; Clustered; Stratified",
   "non-probability; cluster and stratified" = "Non-probability; Clustered; Stratified",
   "Non-probability; Stratified; cluster?" = "Non-probability; Clustered; Stratified",
   "Non-probability; maybe stratified" = "Non-probability; Stratified",
@@ -696,15 +696,15 @@ Q31 <- recode(
   "Non-probability; Stratified" = "Non-probability; Stratified",
   "Non-probability stratified" = "Non-probability; Stratified",
   "Non-probability; not reported"  = "Non-probability",
-  "Non-probability sampling, systematic cluster sampling" = "Non-probability; Clustered",
+  "Non-probability sampling, systematic cluster sampling" = "Probability; Clustered", # Apparenlty systematic sampling is considered probability sampling.
   "non-probability ; stratified sampling" = "Non-probability; Stratified",
-  "probability; hierarchical stratified random sampling; strata go city -> land use -> pond characteristics. I consider land use and pond characteristics strata w/in city" = "Probability; Clustered; Stratified",
+  "probability; hierarchical stratified random sampling; strata go city -> land use -> pond characteristics. I consider land use and pond characteristics strata w/in city" = "Probability; Stratified",
   "Non-probability cluster sampling" = "Non-probability; Clustered",
   "Non-probability ; stratified" = "Non-probability; Stratified",
   "Non-probability sampling" = "Non-probability",
   "probability; stratified; cluster; non-probability" = "Probability; Clustered; Stratified",
   "non-probability" = "Non-probability",
-  "Stratified; non-probability; note that researchers call this stratified sampling but it seems more like cluster sampling" = "Non-probability; Clustered",
+  "Stratified; non-probability; note that researchers call this stratified sampling but it seems more like cluster sampling" = "Probability; Stratified",
   "Probability; Non-probability; cluster sampling; stratified sampling" = "Probability; Clustered; Stratified",
   "Non-probability likely; not reported" = "Unknown",
   "non-probability cluster;used for bird and tree surveys" = "Non-probability; Clustered",
@@ -719,7 +719,7 @@ Q31 <- recode(
   "Census of all houses" = "Census",
   "Non-probability; wetland of particular significance" = "Non-probability",
   "Non-probability; method of chosing is not reported." = "Non-probability",
-  "Non-probability; though not reported" = "Unknown",
+  "Non-probability; though not reported" = "Non-probability; Stratified",
   "Probability; Non-probaility" = "Probability",
   "Non-probability cluster" = "Non-probability; Clustered",
   "random stratified sample" = "Probability; Stratified",
@@ -728,7 +728,7 @@ Q31 <- recode(
   "Non-probability; cluster; strata" = "Non-probability; Clustered; Stratified",
   "random sampling; random stratified" = "Probability; Stratified",
   "stratification,clustering, random selection" = "Probability; Clustered; Stratified",
-  "non-probabilitic; systematic sampling; cluster sampling" = "Non-probability; Clustered",
+  "non-probabilitic; systematic sampling; cluster sampling" = "Probability; Clustered",
   "non-probability; stratified; cluster" = "Non-probability; Clustered; Stratified",
   "Non-probability; stratified;cluster" = "Non-probability; Clustered; Stratified",
   "Non-probabilistic; cluster" = "Non-probability; Clustered",
@@ -737,9 +737,9 @@ Q31 <- recode(
   "non-probability cluster" = "Non-probability; Clustered",
   "Non-probability purposive sample" = "Non-probability",
   "probability; stratified" = "Probability; Stratified",
-  "non-probability cluster sampling" = "Non-probability",
+  "non-probability cluster sampling" = "Non-probability; Clustered",
   "non-probability based on previous study" = "Non-probability",
-  "non probability stratified" = "Non-probability",
+  "non probability stratified" = "Non-probability; Stratified",
   "non-probability; cluster; stratified" = "Non-probability; Clustered; Stratified",
   "Non-probability; cluster" = "Non-probability; Clustered",
   "non-probability?" = "Non-probability",
@@ -752,6 +752,10 @@ Q31 <- recode(
 
 Q31_table <- table(Q31)
 WHERE_data_KD_clean$Q31 <- Q31
+WHERE_data_KD_clean$Q31[WHERE_data_KD_clean$Q7 == "URBECO-STU-2002"] <- "Unknown; Clustered"
+WHERE_data_KD_clean$Q31[WHERE_data_KD_clean$Q7 == "BIOCON-FIC-2004"] <- "Unknown"
+
+
 
 ## Of projects that were Non-probability, which ones described their
 ## non-probability sampling and which just said "XXX was sampled"?
@@ -763,17 +767,16 @@ WHERE_data_KD_clean$Q31 <- Q31
 #	however neither the method for site selection nor even measuring tree diameter
 #	were mentioned in the methods section.
 
-Q32 <-WHERE_data_KD$Q32
+Q32 <- WHERE_data_KD$Q32
 
 Q32 <- recode(
   Q32,
   "Expert opinion" = "Expert choice",
-  "Likely convenience or purposive sample of different habitat strata" = "Not reported",
+  "Likely convenience or purposive sample of different habitat strata" = "Expert choice",
   "no mention of study site choice was made." = "Not reported",
   "Likely convenience sample; other than size and separation constraints no information on chosing study sites is given." = "Convenience sample",
   "Likely convenience or purposive sample of the different habitat types; wetlands used to locate turtles and then turtle range defined the unit of analysis." = "Convenience sample",
   "Fliers put up in neighborhoods to recruit cats." = "Convenience sample",
-  "systematic based on random starting point." = "Systematic sample",
   "Expert choice of location within city?" = "Expert choice",
   "Expert choice of four clustered sampling sites" = "Expert choice",
   "Expert choice." = "Expert choice",
@@ -784,13 +787,13 @@ Q32 <- recode(
   "May be a census of all forest patches (then broken up into habitat patches) in the area, but no idea why this research area was chosen." = "Not reported",
   "Catchments were placed into categories based on the range of available urbanization intensities and a sample of study streams from each category was made using a filtering algorithm based on proximity to the St. Johns River (i.e., only nontidal sites were selected) and road access. ... A stream reach (100 m) was selected in each catchment. Reaches were selected based on road access." = "Convenience sample",
   "na" = "NA",
+  "systematic sampling based on distance (3 and 6 km) intervals from city center along cardinal direction transects" = "NA",
   "not reported" = "Not reported",
   "Nothing other than \"we used this area\" mentioned." = "Not reported",
   "\"Trees were measured in two separate sections of the Arboretum, which we will refer to as site A and site B.\" Nothing else is said." = "Not reported",
   "\"We established two transects across the study area\n(Fig. 1a). Both transects extend westward from the City of Boston, but demonstrate contrasting patterns of development.\" ; \"We used this stratified random sampling scheme to ensure that all land use classes and intensities of urban development would be adequately sampled\"" = "Not reported",
   "Authors chose three parks for unknown reasons; then chose fourty sampling sites." = "Expert choice",
   "Chose 53 sites, got permission from 21; then went door to door to get an additional 5" = "Expert choice",
-  "systematic sampling based on distance (3 and 6 km) intervals from city center along cardinal direction transects" = "Systematic sample",
   "chose old green roofs that authors could get access to" = "Convenience sample",
   "not described, just \"…was sampled at seven different sites\"" = "Not reported",
   "just says sites were chosen" = "Not reported",
@@ -803,7 +806,6 @@ Q32 <- recode(
   "Says \"we collected digital recordings… at 47 lentic water bodies… with varying exposure to traffic noise\"" = "Expert choice",
   "\"We identified 58 study sites in narrow strips of roadside vegetation… using aerial photos and digital map of roads\"" = "Expert choice",
   "\"7 sites were surveyd… the number of sites was limited by availability of suitable areas and logistic constraints\"" = "Not reported",
-  "all HOAs within CAP LTER Phoenix sites." = "NA",
   "\"we selected 8 sites…\"" = "Not reported",
   "Just states that one landfill was sampled" = "Not reported",
   "Used expert knowledge and site visits to find high use sites. Randomly chose stream direction to get paired low site" = "Expert choice",
@@ -823,7 +825,6 @@ Q32 <- recode(
   "location for apiary chosen" = "Not reported",
   "unknown; just says bee foragers were sampled" = "Not reported",
   "gardens intentionally chosen to reflect a gradient in landscape diversity and intensity across the central coast." = "Expert choice",
-  "area split into 1km grid cells; each grid cell was searched via google maps for possible grasslands" = "Systematic sample",
   "sites were chosen based on household/ha and built cover variables" = "Expert choice",
   "chose two locations within each grid cell" = "Expert choice",
   "just says 'we estimated… for lawns of 6 homes'." = "Not reported",
@@ -863,7 +864,7 @@ Q32 <- recode(
   "just says 'the study was located in four large'…" = "Not reported",
   "just says streets selected; sample plots marked" = "Not reported",
   "just says trees were chosen" = "Not reported",
-  "systematic sampling (sampling sites and line transects); strata reported but they are post-hoc as best I can tell" = "Systematic sample",
+  "systematic sampling (sampling sites and line transects); strata reported but they are post-hoc as best I can tell" = "Expert choice", # transect placement is expert choice and then following is a systematic sample for clusters...
   "just says 50x6 plants planted along a road" = "Not reported",
   "sites selected from places meeting author's selection criteria" = "Expert choice",
   "sites selected" = "Expert choice",
@@ -903,12 +904,14 @@ Q32 <- recode(
   "Authors chose plots within the sites… which they also chose without anything other than \"we observed birds at\"" = "Not reported",
   "just says 'we selected'" = "Not reported",
   "all sites authors knew of" = "Expert choice",
+  "all HOAs within CAP LTER Phoenix sites." = "Expert choice" # this is a weird one, think it is expert choice of long term CAP LTER sites fitting specific conditions (data, HOA status, ???). "All HOA" may or may not be correct on additional readthrough
 )
 
 Q32[Q32 == "NA"] <- NA
-Q32[grep("^Probability", Q31, TRUE)] <- NA
+Q32[grep("^Probability|Unknown", Q31, TRUE)] <- NA
 Q32_table <- table(Q32)
 WHERE_data_KD_clean$Q32 <- Q32
+
 
 ## THIS IS THE STRATIFIED SAMPLING QUESTIONS
 
@@ -934,6 +937,8 @@ Q33 <- recode(
 Q33[Q33 == "NA"] <- NA
 Q33_table <- table(Q33)
 WHERE_data_KD_clean$Q33 <- Q33
+sum(!is.na(Q33))
+
 
 # Q34 How many sites in each strata.
 
@@ -954,6 +959,8 @@ Q34 <- recode(
 
 Q34[Q34 == "NA"] <- NA
 Q34[Q33 == "Not reported" & is.na(Q34)]<- "Not reported"
+Q33[Q34 == "Not reported" & is.na(Q33)]<- "Not reported"
+
 Q34_table <- table(Q34)
 WHERE_data_KD_clean$Q34 <- Q34
 
@@ -968,6 +975,7 @@ Q35 <- recode(
 
 Q35[Q35 == "NA"] <- NA
 Q35[Q33 == "Not reported" & is.na(Q35)]<- "Not reported"
+
 Q35_table <- table(Q35)
 WHERE_data_KD_clean$Q35 <- Q35
 
@@ -1707,6 +1715,10 @@ Q49 <- recode(
 Q49_table <- table(Q49)
 WHERE_data_KD_clean$Q49 <- Q49
 
+table(WHERE_data_KD_clean$Q49[WHERE_data_KD_clean$Q32 %in% c("Expert choice", "Convenience sample", "Not reported")])
+
+
+
 # Q50 Are there any policy/conservation recommendations made beyond the research's scope of generalizability?
 
 Q50 <- WHERE_data_KD$Q50
@@ -1862,6 +1874,7 @@ reporting_quality <- tibble(
     
 )
 
+reporting_quality$Q4 <- as.Date(reporting_quality$Q4, format = "%Y")
 
 reporting_quality$RQ_index <-   
   
@@ -1940,10 +1953,27 @@ reporting_quality$RQ_index <-
 
 library(ggplot2)
 ggplot(reporting_quality, aes(Q2, RQ_index)) + geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(
+    angle = 50,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) + ylab("Reporting Quality Index")
 
-ggplot(reporting_quality, aes(Q4, RQ_index)) + geom_jitter() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+ggplot(reporting_quality, aes(Q4, RQ_index)) + geom_jitter() + geom_smooth() +
+  theme(axis.text.x = element_text(
+    angle = 0,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) + ylab("Reporting Quality Index")
+
+library(Kendall)
+
+RQ_TS <- group_by(reporting_quality, reporting_quality$Q4) %>% 
+  summarise(meanRQ = mean(RQ_index))
+  
+  MannKendall(RQ_TS$meanRQ)
 
 
 # Calculate the sampling quality index
@@ -1952,7 +1982,7 @@ sampling_quality <- tibble(
   
   Q1 = WHERE_data_KD_clean$Q1,
   Q2 = WHERE_data_KD_clean$Q2,
-  Q4 = WHERE_data_KD_clean$Q4,
+  Q4 = as.Date(WHERE_data_KD_clean$Q4, format = "%Y"),
   
   Q29 = WHERE_data_KD_clean$Q29,
   Q31 = WHERE_data_KD_clean$Q31,
@@ -1974,12 +2004,22 @@ sampling_quality$SQ_index <-
   if_else(sampling_quality$Q48 == "No", 2, 
           if_else(sampling_quality$Q48 == "Yes", 1, 0)) 
 
-library(ggplot2)
 ggplot(sampling_quality, aes(Q2, SQ_index)) + geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(
+    angle = 50,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) + ylab("Sampling Quality Index")
 
-ggplot(sampling_quality, aes(Q4, SQ_index)) + geom_jitter() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+ggplot(sampling_quality, aes(Q4, SQ_index)) + geom_jitter() + geom_smooth() +
+  theme(axis.text.x = element_text(
+    angle = 0,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) + ylab("Sampling Quality Index")
 
 
 
@@ -1987,3 +2027,72 @@ ggplot(sampling_quality, aes(Q4, SQ_index)) + geom_jitter() +
 ggplot() + geom_point(aes(reporting_quality$RQ_index, sampling_quality$SQ_index)) +
   theme(axis.text.x = element_text(vjust = 1, hjust = 1))
 cor(reporting_quality$RQ_index, sampling_quality$SQ_index)
+
+
+SQ_TS <- group_by(sampling_quality, sampling_quality$Q4) %>% 
+  summarise(meanSQ = mean(SQ_index))
+
+MannKendall(SQ_TS$meanSQ)
+
+
+## ------ Graphs -------------------------------
+
+
+hist(as.numeric(WHERE_data_KD_clean$Q4), 45, xlim = c(1970,2020), ylim = c(0,25), xlab = "Publication Year", main = "Histogram of Publication Year") 
+
+ReviewedPapers <- group_by(WHERE_data_KD_clean, Q4) %>%
+  summarise(count = n()) %>%
+  rename(year = Q4)
+
+ReviewedPapers$type <- rep("Read", nrow(ReviewedPapers))
+
+AllPapers <- rbind(TotalPapers, FittingPapers, ReviewedPapers)
+
+AllPapers$type <- as.factor(AllPapers$type) 
+AllPapers$type <- factor(AllPapers$type, levels = c("Total", "Fitting", "Read"))
+
+
+ggplot() +
+  geom_area(
+    data = AllPapers,
+    aes(x = as.numeric(year), y = count, fill = type),
+    alpha = 0.9,
+    position = "identity"
+  ) +
+  
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) +
+  
+  ylab("Number of Papers") +
+  
+  scale_x_continuous(breaks = seq(1945, 2020, 10)) +
+  scale_fill_manual("Legend",
+                    values = c(
+                      "Total" = "#dddddd",
+                      "Fitting" = "#555555",
+                      "Read" = "#000000"
+                    ))
+
+
+
+
+# needs count per year probably
+
+group_by(WHERE_data_KD_clean, Q4, Q25) %>%
+  summarise(count = n()) %>%
+  ggplot() + geom_line(aes(as.numeric(Q4), count)) + facet_grid(rows = vars(Q25),
+                                                                labeller = labeller(facet_category = label_wrap_gen(width = 10))) +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ),
+  axis.title.x = element_blank()) + ylab("Gradient type used") +
+  scale_x_continuous(breaks = seq(1970, 2020, 5))
+
+
+
