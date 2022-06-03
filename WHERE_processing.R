@@ -11,6 +11,7 @@
 ## table (this file, WHERE_processing.R) --> analyze data and create figures for
 ## publication (WHERE_analysis.R)
 
+library(tibble)
 
 ### -------- INGEST DATA ---------------------- ###
 
@@ -33,7 +34,7 @@ colnames(WHERE_data)[2] <- "Q_text"
 
 #First, remove all of the blank rows & columns.
 
-WHERE_data <- WHERE_data[ !is.na(WHERE_data$QID), !is.na(WHERE_data[ 18, ])]
+WHERE_data <- WHERE_data[ !is.na(WHERE_data$QID), !is.na(WHERE_data[ 24, ])]
 
   # the question is arbitrary, just need a row/question where every value should be filled. 
 
@@ -67,11 +68,6 @@ rownames(WHERE_data) <- WHERE_data$QID
 
 # transpose the data
 WHERE_data <- as.data.frame(t(WHERE_data), stringsAsFactors = F)
-
-### ---------- Check for data error ------------- ###
-
-any(WHERE_data$Q7 == "ECOAPP-HUS-2008")
-# should be False.
 
 
 ### ---------- SUBSET THE DATA ----------- ###
