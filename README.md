@@ -1,4 +1,8 @@
 # WHERE_Analysis
- Analysis of WHERE data collected for the UERL WHERE paper
+Analysis of WHERE data collected for manuscript "Replicability in urban ecology."
 
-Please create a branch with your name & what you're working on--don't post directly to the main.
+Raw data is "Combined Data WHERE.csv"
+
+Data is ingested in "WHERE_processing.R"
+
+Data is analyzed in "WHERE_analysis.R". This generates numbers and figures for the publication.
