@@ -5,3 +5,8 @@ Key file information is as follows:
 * Raw data is "Combined Data WHERE.csv"
 * Data is ingested in "WHERE_processing.R"
 * Data is analyzed in "WHERE_analysis.R". This generates numbers and figures for the publication.
+
+
+
+[![DOI](https://zenodo.org/badge/318636701.svg)](https://zenodo.org/badge/latestdoi/318636701)
+
